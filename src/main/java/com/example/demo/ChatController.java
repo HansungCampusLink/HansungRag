@@ -15,7 +15,7 @@ public class ChatController {
     private final ChatClient chatClient;
 
     @GetMapping("/ai/generate")
-    public Map<String,String> generate(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message) {
+    public Map<String,String> generate(@RequestParam(value = "message", defaultValue = "농담해줘") String message) {
         String generation = this.chatClient
                 .prompt()
                 .user(message)
