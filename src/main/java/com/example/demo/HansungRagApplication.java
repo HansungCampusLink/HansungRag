@@ -40,7 +40,7 @@ public class HansungRagApplication {
 			@Value("${spring.ai.vectorstore.pinecone.index-name}") String indexName,
 			@Value("${spring.ai.vectorstore.pinecone.namespace}") String namespace
 	) {
-		PineconeVectorStore.PineconeVectorStoreConfig.Builder builder = PineconeVectorStore.PineconeVectorStoreConfig.builder()
+		var builder = PineconeVectorStore.PineconeVectorStoreConfig.builder()
 				.withApiKey(apiKey)
 				.withIndexName(indexName)
 				.withNamespace(namespace);
