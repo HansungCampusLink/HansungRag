@@ -40,7 +40,7 @@ public class RagChatController {
             Map<String, Object> response = Map.of(
                     "messages", Map.of(
                             "role", "assistant",
-                            "content", "I'm Good! " + generation
+                            "content", generation
                     ),
                     "ref", List.of(
                             "www.hansung/article/123",
