@@ -328,11 +328,11 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 		QueryResponseWithUnsignedIndices queryResponse = null;
 		if (StringUtils.hasText(nativeExpressionFilters)) {
 			queryResponse = this.index.queryByVector(request.getTopK(), EmbeddingUtils.toList(queryEmbedding),
-					namespace, metadataFiltersToStruct(nativeExpressionFilters));
+					namespace, metadataFiltersToStruct(nativeExpressionFilters), false, true);
 		}
 		else {
 			queryResponse = this.index.queryByVector(request.getTopK(), EmbeddingUtils.toList(queryEmbedding),
-					namespace);
+					namespace, false, true);
 		}
 
 		return queryResponse.getMatchesList()

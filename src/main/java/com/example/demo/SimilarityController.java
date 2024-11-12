@@ -25,7 +25,7 @@ public class SimilarityController {
     }
 
     @GetMapping("/ai/similarity")
-    public ResponseEntity<List<String>> findSimilar(@RequestParam String query) {
+    public ResponseEntity<List<String>> findSimilar(@RequestParam(defaultValue = "spring") String query) {
         // 하드코딩된 문서에서 유사한 문서 검색
         List<Document> similarDocuments = vectorStore.similaritySearch(query);
 

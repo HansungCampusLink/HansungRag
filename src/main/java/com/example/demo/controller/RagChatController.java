@@ -2,6 +2,8 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.ChatDataDto;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,10 +16,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/chat")
+@RequiredArgsConstructor
 public class RagChatController {
+    private final ChatClient chatClient;
 
     @PostMapping
     public ResponseEntity<Map> chat(@RequestBody ChatDataDto chatDataDto) {
+
         List<ChatDataDto.Message> messages = chatDataDto.getMessages();
 
         if (messages != null && !messages.isEmpty()) {
@@ -25,11 +30,17 @@ public class RagChatController {
             ChatDataDto.Message lastMessage = messages.get(messages.size() - 1);
             String userContent = lastMessage.getContent();
 
+            String generation = this.chatClient
+                    .prompt()
+                    .user(userContent)
+                    .call()
+                    .content();
+
             // 응답 구성
             Map<String, Object> response = Map.of(
                     "messages", Map.of(
                             "role", "assistant",
-                            "content", "I'm Good! " + userContent
+                            "content", "I'm Good! " + generation
                     ),
                     "ref", List.of(
                             "www.hansung/article/123",
