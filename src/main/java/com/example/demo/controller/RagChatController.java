@@ -2,8 +2,13 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.ChatDataDto;
 
+import com.example.demo.service.DocumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,12 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/chat")
 @RequiredArgsConstructor
 public class RagChatController {
     private final ChatClient chatClient;
+    private final DocumentService documentService;
 
     @PostMapping
     public ResponseEntity<Map> chat(@RequestBody ChatDataDto chatDataDto) {
@@ -30,22 +37,34 @@ public class RagChatController {
             ChatDataDto.Message lastMessage = messages.get(messages.size() - 1);
             String userContent = lastMessage.getContent();
 
-            String generation = this.chatClient
+            List<Message> chatHistory = chatDataDto.getMessages().stream()
+                    .map(message ->
+                            switch (message.getRole()) {
+                                case "user" -> new UserMessage(message.getContent());
+                                case "assistant" -> new AssistantMessage(message.getContent());
+                                default -> throw new IllegalStateException("Unexpected value: " + message.getRole());
+                            })
+                    .collect(Collectors.toList());
+
+            ChatResponse chatResponse = this.chatClient
                     .prompt()
+                    .messages(chatHistory)
                     .user(userContent)
-                    .call()
-                    .content();
+                    .call().chatResponse();
+
+            String content = chatResponse.getResult().getOutput().getContent();
+//            System.out.println(chatResponse);
+
+            List<String> refLists = documentService.findSimilarDocuments(userContent);
+
 
             // 응답 구성
             Map<String, Object> response = Map.of(
                     "messages", Map.of(
                             "role", "assistant",
-                            "content", generation
+                            "content", content
                     ),
-                    "ref", List.of(
-                            "www.hansung/article/123",
-                            "https://www.hansung.ac.kr/bbs/hansung/143/264590/artclView.do?layout=unknown"
-                    )
+                    "ref", refLists
             );
 
             return ResponseEntity.ok(response);
