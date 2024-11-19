@@ -30,11 +30,13 @@ public class ChatData {
         private Long id;
 
         private String role;
+
+        @Column(columnDefinition = "TEXT")
         private String content;
 
         @ElementCollection
         @CollectionTable(name = "message_refs", joinColumns = @JoinColumn(name = "message_id"))
-        @Column(name = "ref")
+        @Column(name = "ref", columnDefinition = "TEXT")
         private List<String> ref;
 
         public Message(String role, String content, List<String> ref) {
