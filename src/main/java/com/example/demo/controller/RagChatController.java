@@ -8,7 +8,9 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.document.Document;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,12 +22,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS;
+
 @RestController
 @RequestMapping("/api/v1/chat")
 @RequiredArgsConstructor
 public class RagChatController {
     private final ChatClient chatClient;
-    private final DocumentService documentService;
 
     @PostMapping
     public ResponseEntity<Map> chat(@RequestBody ChatDataDto chatDataDto) {
@@ -52,10 +55,16 @@ public class RagChatController {
                     .user(userContent)
                     .call().chatResponse();
 
-            String content = chatResponse.getResult().getOutput().getContent();
-//            System.out.println(chatResponse);
+            List<Document> documents = chatResponse.getMetadata().get(RETRIEVED_DOCUMENTS);
 
-            List<String> refLists = documentService.findSimilarDocuments(userContent);
+            List<String> refLists = documents.stream()
+                    .map(Document::getMetadata)
+                    .map(metadata -> metadata.get("link").toString())
+                    .collect(Collectors.toList());
+
+
+            String content = chatResponse.getResult().getOutput().getContent();
+
 
 
             // 응답 구성

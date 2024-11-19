@@ -18,21 +18,21 @@ public class HansungRagApplication {
 		SpringApplication.run(HansungRagApplication.class, args);
 	}
 	@Bean
-	ChatClient chatClient(ChatClient.Builder builder, CustomQuestionAnswerAdvisor questionAnswerAdvisor) {
+	ChatClient chatClient(ChatClient.Builder builder, QuestionAnswerAdvisor questionAnswerAdvisor) {
 		return builder
 				.defaultAdvisors(questionAnswerAdvisor)
 				.build();
 	}
 
-//	@Bean
-//	QuestionAnswerAdvisor questionAnswerAdvisor(VectorStore vectorStore) {
-//		return new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults());
-//	}
-
 	@Bean
-	CustomQuestionAnswerAdvisor questionAnswerAdvisor(VectorStore vectorStore) {
-		return new CustomQuestionAnswerAdvisor(vectorStore, SearchRequest.defaults());
+	QuestionAnswerAdvisor questionAnswerAdvisor(VectorStore vectorStore) {
+		return new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults());
 	}
+
+//	@Bean
+//	CustomQuestionAnswerAdvisor questionAnswerAdvisor(VectorStore vectorStore) {
+//		return new CustomQuestionAnswerAdvisor(vectorStore, SearchRequest.defaults());
+//	}
 
 	@Bean
 	VectorStore vectorStore(PineconeVectorStore.PineconeVectorStoreConfig pineconeVectorStoreConfig, EmbeddingModel embeddingModel) {
