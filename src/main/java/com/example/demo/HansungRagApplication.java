@@ -17,22 +17,34 @@ public class HansungRagApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(HansungRagApplication.class, args);
 	}
+
+	private static final String DEFAULT_SYSTEM_MESSAGE = """
+			너는 한성대학교 키오스크의 안내원 "탐정부기" 야.
+			사람들에게 질문을 받으면, 친절하게 답변을 해줘.
+			""";
 	@Bean
 	ChatClient chatClient(ChatClient.Builder builder, QuestionAnswerAdvisor questionAnswerAdvisor) {
 		return builder
+				.defaultSystem(DEFAULT_SYSTEM_MESSAGE)
 				.defaultAdvisors(questionAnswerAdvisor)
 				.build();
 	}
 
 	@Bean
 	QuestionAnswerAdvisor questionAnswerAdvisor(VectorStore vectorStore) {
-		return new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults());
-	}
+		return new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults(), """
 
-//	@Bean
-//	CustomQuestionAnswerAdvisor questionAnswerAdvisor(VectorStore vectorStore) {
-//		return new CustomQuestionAnswerAdvisor(vectorStore, SearchRequest.defaults());
-//	}
+			Context information is below, surrounded by ---------------------
+
+			---------------------
+			{question_answer_context}
+			---------------------
+
+			Given the context and provided history information and not prior knowledge,
+			reply to the user comment. If the answer is not in the context, inform
+			the user that you can't answer the question. 너는 질문하는 사람이 어떤 사람인지, 전공이 무엇인지 안다면 고려해서 답변을 해줘야 해.
+			""") ;
+	}
 
 	@Bean
 	VectorStore vectorStore(PineconeVectorStore.PineconeVectorStoreConfig pineconeVectorStoreConfig, EmbeddingModel embeddingModel) {

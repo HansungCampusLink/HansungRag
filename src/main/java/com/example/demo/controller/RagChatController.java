@@ -39,7 +39,8 @@ public class RagChatController {
 
         // 마지막 메시지의 content 가져오기
         MessageDto lastMessage = messages.get(messages.size() - 1);
-        String userContent = lastMessage.getContent();
+
+        String userContent = String.format("who : %s, major: %s, question : ", chatDataDto.getWho(), chatDataDto.getMajor(), lastMessage.getContent());
 
         List<Message> chatHistory = chatDataDto.getMessages().stream()
                 .map(message ->

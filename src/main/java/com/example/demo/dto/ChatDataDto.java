@@ -11,8 +11,8 @@ import java.util.List;
 @Setter
 public class ChatDataDto {
     private Long chatId;
-    private String who;
-    private String major;
+    private String who = "Unknown";
+    private String major = "Unknown";
     @NotNull @NotEmpty
     private List<MessageDto> messages;
 }
