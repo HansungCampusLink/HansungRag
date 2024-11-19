@@ -65,7 +65,7 @@ public class RagChatController {
 
 
         String content = chatResponse.getResult().getOutput().getContent();
-        MessageDto assistantMsg = new MessageDto("assistant", content);
+        MessageDto assistantMsg = new MessageDto("assistant", content, refLists);
 
         Long chatID = chatDataDto.getChatId();
         if (chatDataDto.getChatId() == null) {

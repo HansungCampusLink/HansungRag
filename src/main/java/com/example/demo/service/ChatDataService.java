@@ -20,25 +20,13 @@ public class ChatDataService {
     public List<MessageDto> getChatHistory(Long id) {
         return getChatDataById(id).getMessages()
                 .stream()
-                .map(message -> {
-                    MessageDto messageDto = new MessageDto();
-                    messageDto.setRole(message.getRole());
-                    messageDto.setContent(message.getContent());
-                    return messageDto;
-                })
+                .map(MessageDto::fromEntity)
                 .toList();
     }
 
     public void addMessage(Long id, MessageDto ...message) {
         ChatData chatData = getChatDataById(id);
-        Arrays.stream(message).map(
-                messageDto -> {
-                    ChatData.Message messageEntity = new ChatData.Message();
-                    messageEntity.setRole(messageDto.getRole());
-                    messageEntity.setContent(messageDto.getContent());
-                    return messageEntity;
-                }
-        ).forEach(chatData.getMessages()::add);
+        Arrays.stream(message).map(MessageDto::toEntity).forEach(chatData.getMessages()::add);
         chatDataRepository.save(chatData);
     }
 
@@ -49,22 +37,8 @@ public class ChatDataService {
     public Long saveChatData(ChatDataDto chatData, MessageDto ...additionalMessages) {
         ChatData chatDataEntity = new ChatData();
         List<ChatData.Message> messages = new ArrayList<>();
-        chatData.getMessages().stream().map(
-                messageDto -> {
-                    ChatData.Message messageEntity = new ChatData.Message();
-                    messageEntity.setRole(messageDto.getRole());
-                    messageEntity.setContent(messageDto.getContent());
-                    return messageEntity;
-                }
-        ).forEach(messages::add);
-        Arrays.stream(additionalMessages).map(
-                messageDto -> {
-                    ChatData.Message messageEntity = new ChatData.Message();
-                    messageEntity.setRole(messageDto.getRole());
-                    messageEntity.setContent(messageDto.getContent());
-                    return messageEntity;
-                }
-        ).forEach(messages::add);
+        chatData.getMessages().stream().map(MessageDto::toEntity).forEach(messages::add);
+        Arrays.stream(additionalMessages).map(MessageDto::toEntity).forEach(messages::add);
         chatDataEntity.setMessages(messages);
         return chatDataRepository.save(chatDataEntity).getId();
     }
