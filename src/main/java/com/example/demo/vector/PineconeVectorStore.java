@@ -224,8 +224,8 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 	 * @param customObservationConvention The custom observation convention.
 	 */
 	public PineconeVectorStore(PineconeVectorStoreConfig config, EmbeddingModel embeddingModel,
-			ObservationRegistry observationRegistry, VectorStoreObservationConvention customObservationConvention,
-			BatchingStrategy batchingStrategy) {
+							   ObservationRegistry observationRegistry, VectorStoreObservationConvention customObservationConvention,
+							   BatchingStrategy batchingStrategy) {
 		super(observationRegistry, customObservationConvention);
 		Assert.notNull(config, "PineconeVectorStoreConfig must not be null");
 		Assert.notNull(embeddingModel, "EmbeddingModel must not be null");
@@ -250,9 +250,9 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 		this.embeddingModel.embed(documents, EmbeddingOptionsBuilder.builder().build(), this.batchingStrategy);
 
 		List<VectorWithUnsignedIndices> upsertVectors = documents.stream()
-			.map(document -> buildUpsertVectorWithUnsignedIndices(document.getId(),
-					EmbeddingUtils.toList(document.getEmbedding()), null, null, metadataToStruct(document)))
-			.toList();
+				.map(document -> buildUpsertVectorWithUnsignedIndices(document.getId(),
+						EmbeddingUtils.toList(document.getEmbedding()), null, null, metadataToStruct(document)))
+				.toList();
 
 		this.index.upsert(upsertVectors, namespace);
 	}
@@ -275,8 +275,8 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 		try {
 			var structBuilder = Struct.newBuilder();
 			JsonFormat.parser()
-				.ignoringUnknownFields()
-				.merge(this.objectMapper.writeValueAsString(document.getMetadata()), structBuilder);
+					.ignoringUnknownFields()
+					.merge(this.objectMapper.writeValueAsString(document.getMetadata()), structBuilder);
 			structBuilder.putFields(this.pineconeContentFieldName, contentValue(document));
 			return structBuilder.build();
 		}
@@ -338,17 +338,17 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 		System.out.printf("Query response: %s%n", queryResponse);
 
 		return queryResponse.getMatchesList()
-			.stream()
-			.filter(scoredVector -> scoredVector.getScore() >= request.getSimilarityThreshold())
-			.map(scoredVector -> {
-				var id = scoredVector.getId();
-				Struct metadataStruct = scoredVector.getMetadata();
-				var content = metadataStruct.getFieldsOrThrow(this.pineconeContentFieldName).getStringValue();
-				Map<String, Object> metadata = extractMetadata(metadataStruct);
-				metadata.put(this.pineconeDistanceMetadataFieldName, 1 - scoredVector.getScore());
-				return new Document(id, content, metadata);
-			})
-			.toList();
+				.stream()
+				.filter(scoredVector -> scoredVector.getScore() >= request.getSimilarityThreshold())
+				.map(scoredVector -> {
+					var id = scoredVector.getId();
+					Struct metadataStruct = scoredVector.getMetadata();
+					var content = metadataStruct.getFieldsOrThrow(this.pineconeContentFieldName).getStringValue();
+					Map<String, Object> metadata = extractMetadata(metadataStruct);
+					metadata.put(this.pineconeDistanceMetadataFieldName, 1 - scoredVector.getScore());
+					return new Document(id, content, metadata);
+				})
+				.toList();
 	}
 
 	@Override
@@ -390,10 +390,10 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 	public VectorStoreObservationContext.Builder createObservationContextBuilder(String operationName) {
 
 		return VectorStoreObservationContext.builder(VectorStoreProvider.PINECONE.value(), operationName)
-			.withCollectionName(this.pineconeIndexName)
-			.withDimensions(this.embeddingModel.dimensions())
-			.withNamespace(this.pineconeNamespace)
-			.withFieldName(this.pineconeContentFieldName);
+				.withCollectionName(this.pineconeIndexName)
+				.withDimensions(this.embeddingModel.dimensions())
+				.withNamespace(this.pineconeNamespace)
+				.withFieldName(this.pineconeContentFieldName);
 	}
 
 }

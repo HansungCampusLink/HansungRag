@@ -39,6 +39,11 @@ public class RagChatController {
             // 마지막 메시지의 content 가져오기
             ChatDataDto.Message lastMessage = messages.get(messages.size() - 1);
             String userContent = lastMessage.getContent();
+            String who = chatDataDto.getWho();
+            String major = chatDataDto.getMajor();
+
+
+            String personalPrompt = String.format("사용자: %s, 전공: %s,\n질문: %s",who,major,userContent);
 
             List<Message> chatHistory = chatDataDto.getMessages().stream()
                     .map(message ->
@@ -52,7 +57,7 @@ public class RagChatController {
             ChatResponse chatResponse = this.chatClient
                     .prompt()
                     .messages(chatHistory)
-                    .user(userContent)
+                    .user(personalPrompt)
                     .call().chatResponse();
 
             List<Document> documents = chatResponse.getMetadata().get(RETRIEVED_DOCUMENTS);

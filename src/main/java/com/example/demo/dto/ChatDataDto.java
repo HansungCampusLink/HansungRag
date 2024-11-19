@@ -8,8 +8,8 @@ import java.util.List;
 @Getter
 @Setter
 public class ChatDataDto {
-    private String who;
-    private String major;
+    private String who = "unknown";
+    private String major = "unKnown";
     private List<Message> messages;
 
     @Getter
