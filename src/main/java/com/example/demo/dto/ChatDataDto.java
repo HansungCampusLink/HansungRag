@@ -9,7 +9,7 @@ import java.util.List;
 @Setter
 public class ChatDataDto {
     private String who = "unknown";
-    private String major = "unKnown";
+    private String major = "unknown";
     private List<Message> messages;
 
     @Getter
