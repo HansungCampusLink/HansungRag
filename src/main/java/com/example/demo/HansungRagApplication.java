@@ -29,6 +29,11 @@ public class HansungRagApplication {
 		return new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults());
 	}
 
+//	@Bean
+//	CustomQuestionAnswerAdvisor questionAnswerAdvisor(VectorStore vectorStore) {
+//		return new CustomQuestionAnswerAdvisor(vectorStore, SearchRequest.defaults());
+//	}
+
 	@Bean
 	VectorStore vectorStore(PineconeVectorStore.PineconeVectorStoreConfig pineconeVectorStoreConfig, EmbeddingModel embeddingModel) {
 		return new PineconeVectorStore(pineconeVectorStoreConfig, embeddingModel);

@@ -335,6 +335,8 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 					namespace, false, true);
 		}
 
+		System.out.printf("Query response: %s%n", queryResponse);
+
 		return queryResponse.getMatchesList()
 			.stream()
 			.filter(scoredVector -> scoredVector.getScore() >= request.getSimilarityThreshold())
