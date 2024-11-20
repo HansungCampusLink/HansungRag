@@ -1,5 +1,7 @@
 package com.example.demo.dto;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,14 +10,9 @@ import java.util.List;
 @Getter
 @Setter
 public class ChatDataDto {
-    private String who = "unknown";
-    private String major = "unknown";
-    private List<Message> messages;
-
-    @Getter
-    @Setter
-    public static class Message {
-        private String role;
-        private String content;
-    }
+    private Long chatId;
+    private String who = "Unknown";
+    private String major = "Unknown";
+    @NotNull @NotEmpty
+    private List<MessageDto> messages;
 }

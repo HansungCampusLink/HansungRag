@@ -46,8 +46,13 @@ dependencies {
 
 	// pinecone-client
 	implementation "io.pinecone:pinecone-client:3.0.0"
-//	implementation "io.pinecone:pinecone-client:2.1.0"
 	implementation 'com.google.protobuf:protobuf-java-util:3.24.2' // JSON 포맷 및 기타 유틸리티 포함
+
+	// Spring Data JPA
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// H2 Database
+	runtimeOnly 'com.h2database:h2'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
