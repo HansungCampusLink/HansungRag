@@ -5,6 +5,7 @@ import com.example.demo.dto.ChatDataDto;
 import com.example.demo.dto.MessageDto;
 import com.example.demo.dto.RagChatDto;
 import com.example.demo.service.ChatDataService;
+import com.example.demo.service.DocumentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
@@ -31,6 +32,7 @@ import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.R
 public class RagChatController {
     private final ChatClient chatClient;
     private final ChatDataService chatDataService;
+    private final DocumentService documentService;
 
     @PostMapping
     public ResponseEntity<RagChatDto> chat(@RequestBody @Valid ChatDataDto chatDataDto) {
@@ -40,7 +42,7 @@ public class RagChatController {
         // 마지막 메시지의 content 가져오기
         MessageDto lastMessage = messages.get(messages.size() - 1);
 
-        String userContent = String.format("who : %s, major: %s, question : ", chatDataDto.getWho(), chatDataDto.getMajor(), lastMessage.getContent());
+        String userContent = String.format("who : %s, major: %s, question : %s", chatDataDto.getWho(), chatDataDto.getMajor(), lastMessage.getContent());
 
         List<Message> chatHistory = chatDataDto.getMessages().stream()
                 .map(message ->
@@ -64,9 +66,12 @@ public class RagChatController {
                 .map(metadata -> metadata.get("link").toString())
                 .collect(Collectors.toList());
 
+        List<String> availableLinks = refLists.stream()
+                .filter(documentService::isDocumentAvailable) // 각 링크에 대해 접근 가능 여부 체크
+                .toList();
 
         String content = chatResponse.getResult().getOutput().getContent();
-        MessageDto assistantMsg = new MessageDto("assistant", content, refLists);
+        MessageDto assistantMsg = new MessageDto("assistant", content, availableLinks);
 
         Long chatID = chatDataDto.getChatId();
         if (chatDataDto.getChatId() == null) {
@@ -76,7 +81,7 @@ public class RagChatController {
             chatDataService.addMessage(chatID, lastMessage, assistantMsg);
         }
 
-        RagChatDto ragChatDto = new RagChatDto(chatID, assistantMsg, refLists);
+        RagChatDto ragChatDto = new RagChatDto(chatID, assistantMsg, availableLinks);
 
 
         return ResponseEntity.ok(ragChatDto);
