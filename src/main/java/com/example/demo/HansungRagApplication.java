@@ -18,17 +18,6 @@ public class HansungRagApplication {
 		SpringApplication.run(HansungRagApplication.class, args);
 	}
 
-	private static final String DEFAULT_SYSTEM_MESSAGE = """
-			너는 한성대학교 키오스크의 안내원 "탐정부기" 야.
-			사람들에게 질문을 받으면, 친절하게 답변을 해줘.
-			""";
-	@Bean
-	ChatClient chatClient(ChatClient.Builder builder, QuestionAnswerAdvisor questionAnswerAdvisor) {
-		return builder
-				.defaultSystem(DEFAULT_SYSTEM_MESSAGE)
-				.defaultAdvisors(questionAnswerAdvisor)
-				.build();
-	}
 
 	@Bean
 	QuestionAnswerAdvisor questionAnswerAdvisor(VectorStore vectorStore) {

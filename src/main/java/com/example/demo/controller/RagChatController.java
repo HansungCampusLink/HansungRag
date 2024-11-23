@@ -13,7 +13,6 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,7 +28,7 @@ import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.R
 @RequestMapping("/api/v1/chat")
 @RequiredArgsConstructor
 public class RagChatController {
-    private final ChatClient chatClient;
+    private final ChatClient ragChatClient;
     private final ChatDataService chatDataService;
 
     @PostMapping
@@ -39,6 +38,8 @@ public class RagChatController {
 
         // 마지막 메시지의 content 가져오기
         MessageDto lastMessage = messages.get(messages.size() - 1);
+
+
 
         String userContent = String.format("who : %s, major: %s, question : ", chatDataDto.getWho(), chatDataDto.getMajor(), lastMessage.getContent());
 
@@ -51,7 +52,7 @@ public class RagChatController {
                         })
                 .collect(Collectors.toList());
 
-        ChatResponse chatResponse = this.chatClient
+        ChatResponse chatResponse = this.ragChatClient
                 .prompt()
                 .messages(chatHistory)
                 .user(userContent)
