@@ -5,6 +5,8 @@ import com.example.demo.dto.ChatDataDto;
 import com.example.demo.dto.MessageDto;
 import com.example.demo.dto.RagChatDto;
 import com.example.demo.service.ChatDataService;
+import com.example.demo.service.NavigationService;
+import com.example.demo.service.RagService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
@@ -28,8 +30,9 @@ import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.R
 @RequestMapping("/api/v1/chat")
 @RequiredArgsConstructor
 public class RagChatController {
-    private final ChatClient ragChatClient;
     private final ChatDataService chatDataService;
+    private final RagService ragService;
+    private final NavigationService navigationService;
 
     @PostMapping
     public ResponseEntity<RagChatDto> chat(@RequestBody @Valid ChatDataDto chatDataDto) {
@@ -38,35 +41,28 @@ public class RagChatController {
 
         // 마지막 메시지의 content 가져오기
         MessageDto lastMessage = messages.get(messages.size() - 1);
+        String query = lastMessage.getContent();
 
 
 
-        String userContent = String.format("who : %s, major: %s, question : ", chatDataDto.getWho(), chatDataDto.getMajor(), lastMessage.getContent());
+        String content = "";
+        List<String> refLists = null;
+        String destination = null;
+        if (navigationService.isNavigationQuery(query)) {
+            NavigationService.NavigationOutputDto navigate = navigationService.navigate(query);
 
-        List<Message> chatHistory = chatDataDto.getMessages().stream()
-                .map(message ->
-                        switch (message.getRole()) {
-                            case "user" -> new UserMessage(message.getContent());
-                            case "assistant" -> new AssistantMessage(message.getContent());
-                            default -> throw new IllegalStateException("Unexpected value: " + message.getRole());
-                        })
-                .collect(Collectors.toList());
+            content = navigate.content();
+            destination = navigate.destination();
+            refLists = navigate.refLists();
+        }
+        else {
+            RagService.RagOutputDto ragOutPut = ragService.getRagOutPut(chatDataDto);
 
-        ChatResponse chatResponse = this.ragChatClient
-                .prompt()
-                .messages(chatHistory)
-                .user(userContent)
-                .call().chatResponse();
-
-        List<Document> documents = chatResponse.getMetadata().get(RETRIEVED_DOCUMENTS);
-
-        List<String> refLists = documents.stream()
-                .map(Document::getMetadata)
-                .map(metadata -> metadata.get("link").toString())
-                .collect(Collectors.toList());
+            content = ragOutPut.content();
+            refLists = ragOutPut.refLists();
+        }
 
 
-        String content = chatResponse.getResult().getOutput().getContent();
         MessageDto assistantMsg = new MessageDto("assistant", content, refLists);
 
         Long chatID = chatDataDto.getChatId();
@@ -77,9 +73,10 @@ public class RagChatController {
             chatDataService.addMessage(chatID, lastMessage, assistantMsg);
         }
 
-        RagChatDto ragChatDto = new RagChatDto(chatID, assistantMsg, refLists);
+        RagChatDto ragChatDto = new RagChatDto(chatID, assistantMsg, refLists, destination);
 
 
         return ResponseEntity.ok(ragChatDto);
     }
+
 }

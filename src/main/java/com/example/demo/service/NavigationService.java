@@ -14,6 +14,8 @@ import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.ai.openai.api.ResponseFormat;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -77,5 +79,12 @@ public class NavigationService {
 
         return navigationCheckDto.isNavigation();
     }
+
+    public NavigationOutputDto navigate(String query) {
+
+        return new NavigationOutputDto("교수님을 찾는자면 연구관으로 가야합니다.", "연구관", List.of("https://map.kakao.com/link/to/17564464"));
+    }
+
+    public static record NavigationOutputDto(String content, String destination, List<String> refLists) {}
 
 }
