@@ -39,14 +39,14 @@ public class RagChatController {
         List<String> refLists = null;
         String destination = null;
         if (navigationService.isNavigationQuery(query)) {
-            NavigationService.NavigationOutputDto navigate = navigationService.navigate(query);
+            var navigate = navigationService.navigate(query);
 
             content = navigate.content();
             destination = navigate.destination();
             refLists = navigate.refLists();
         }
         else {
-            RagService.RagOutputDto ragOutPut = ragService.getRagOutPut(chatDataDto);
+            var ragOutPut = ragService.getRagOutPut(chatDataDto);
 
             content = ragOutPut.content();
             refLists = ragOutPut.refLists();
