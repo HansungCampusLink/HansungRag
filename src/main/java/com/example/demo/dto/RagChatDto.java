@@ -11,12 +11,10 @@ public class RagChatDto {
     private Long chatId;
     private MessageDto messages;
     private List<String> ref;
-    private String destination;
 
-    public RagChatDto(Long chatId, MessageDto messages, List<String> ref, String destination) {
+    public RagChatDto(Long chatId, MessageDto messages, List<String> ref) {
         this.chatId = chatId;
         this.messages = messages;
         this.ref = ref;
-        this.destination = destination;
     }
 }

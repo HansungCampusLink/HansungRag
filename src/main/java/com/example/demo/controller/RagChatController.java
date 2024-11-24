@@ -9,12 +9,6 @@ import com.example.demo.service.NavigationService;
 import com.example.demo.service.RagService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.document.Document;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,9 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS;
 
 @RestController
 @RequestMapping("/api/v1/chat")
@@ -42,7 +33,6 @@ public class RagChatController {
         // 마지막 메시지의 content 가져오기
         MessageDto lastMessage = messages.get(messages.size() - 1);
         String query = lastMessage.getContent();
-
 
 
         String content = "";
@@ -63,7 +53,7 @@ public class RagChatController {
         }
 
 
-        MessageDto assistantMsg = new MessageDto("assistant", content, refLists);
+        MessageDto assistantMsg = new MessageDto("assistant", content, refLists, destination);
 
         Long chatID = chatDataDto.getChatId();
         if (chatDataDto.getChatId() == null) {
@@ -73,7 +63,7 @@ public class RagChatController {
             chatDataService.addMessage(chatID, lastMessage, assistantMsg);
         }
 
-        RagChatDto ragChatDto = new RagChatDto(chatID, assistantMsg, refLists, destination);
+        RagChatDto ragChatDto = new RagChatDto(chatID, assistantMsg, refLists);
 
 
         return ResponseEntity.ok(ragChatDto);
