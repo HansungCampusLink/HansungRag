@@ -10,11 +10,9 @@ import java.util.List;
 public class RagChatDto {
     private Long chatId;
     private MessageDto messages;
-    private List<String> ref;
 
-    public RagChatDto(Long chatId, MessageDto messages, List<String> ref) {
+    public RagChatDto(Long chatId, MessageDto messages) {
         this.chatId = chatId;
         this.messages = messages;
-        this.ref = ref;
     }
 }

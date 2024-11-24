@@ -63,7 +63,7 @@ public class RagChatController {
             chatDataService.addMessage(chatID, lastMessage, assistantMsg);
         }
 
-        RagChatDto ragChatDto = new RagChatDto(chatID, assistantMsg, refLists);
+        RagChatDto ragChatDto = new RagChatDto(chatID, assistantMsg);
 
 
         return ResponseEntity.ok(ragChatDto);
