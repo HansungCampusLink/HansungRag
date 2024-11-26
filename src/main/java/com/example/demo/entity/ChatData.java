@@ -31,7 +31,7 @@ public class ChatData {
 
         private String role;
 
-        @Column(columnDefinition = "TEXT")
+        @Column(columnDefinition = "CLOB")
         private String content;
 
         @ElementCollection
