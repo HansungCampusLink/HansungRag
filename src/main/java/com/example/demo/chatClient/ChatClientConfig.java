@@ -35,8 +35,11 @@ public class ChatClientConfig {
     }
 
     @Bean
-    ChatClient maumChatClient(ChatModel maumChatModel) {
-        return ChatClient.builder(maumChatModel).build();
+    ChatClient maumChatClient(ChatModel maumChatModel, QuestionAnswerAdvisor questionAnswerAdvisor) {
+        return ChatClient.builder(maumChatModel)
+                .defaultSystem(DEFAULT_SYSTEM_MESSAGE)
+                .defaultAdvisors(questionAnswerAdvisor)
+                .build();
     }
 
     @Bean
