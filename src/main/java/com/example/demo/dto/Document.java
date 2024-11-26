@@ -34,7 +34,7 @@ public class Document {
 
     public Map<String, Object> toSpringMetadata() {
         return Map.of(
-                "date", this.date,
+                "date", this.date.getTime(),
                 "title", this.title,
                 "link", this.link,
                 "author", this.author,
