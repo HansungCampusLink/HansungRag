@@ -7,6 +7,7 @@ import com.example.demo.dto.RagChatDto;
 import com.example.demo.service.ChatDataService;
 import com.example.demo.service.NavigationService;
 import com.example.demo.service.RagService;
+import com.example.demo.service.DocumentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ public class RagChatController {
     private final ChatDataService chatDataService;
     private final RagService ragService;
     private final NavigationService navigationService;
+    private final DocumentService documentService;
 
     @PostMapping
     public ResponseEntity<RagChatDto> chat(@RequestBody @Valid ChatDataDto chatDataDto) {

@@ -16,10 +16,13 @@
 
 package com.example.demo.vector;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.*;
+import io.pinecone.proto.*;
+import io.pinecone.proto.Vector;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.BatchingStrategy;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -224,8 +227,8 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 	 * @param customObservationConvention The custom observation convention.
 	 */
 	public PineconeVectorStore(PineconeVectorStoreConfig config, EmbeddingModel embeddingModel,
-			ObservationRegistry observationRegistry, VectorStoreObservationConvention customObservationConvention,
-			BatchingStrategy batchingStrategy) {
+							   ObservationRegistry observationRegistry, VectorStoreObservationConvention customObservationConvention,
+							   BatchingStrategy batchingStrategy) {
 		super(observationRegistry, customObservationConvention);
 		Assert.notNull(config, "PineconeVectorStoreConfig must not be null");
 		Assert.notNull(embeddingModel, "EmbeddingModel must not be null");
@@ -250,9 +253,9 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 		this.embeddingModel.embed(documents, EmbeddingOptionsBuilder.builder().build(), this.batchingStrategy);
 
 		List<VectorWithUnsignedIndices> upsertVectors = documents.stream()
-			.map(document -> buildUpsertVectorWithUnsignedIndices(document.getId(),
-					EmbeddingUtils.toList(document.getEmbedding()), null, null, metadataToStruct(document)))
-			.toList();
+				.map(document -> buildUpsertVectorWithUnsignedIndices(document.getId(),
+						EmbeddingUtils.toList(document.getEmbedding()), null, null, metadataToStruct(document)))
+				.toList();
 
 		this.index.upsert(upsertVectors, namespace);
 	}
@@ -275,8 +278,8 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 		try {
 			var structBuilder = Struct.newBuilder();
 			JsonFormat.parser()
-				.ignoringUnknownFields()
-				.merge(this.objectMapper.writeValueAsString(document.getMetadata()), structBuilder);
+					.ignoringUnknownFields()
+					.merge(this.objectMapper.writeValueAsString(document.getMetadata()), structBuilder);
 			structBuilder.putFields(this.pineconeContentFieldName, contentValue(document));
 			return structBuilder.build();
 		}
@@ -335,21 +338,106 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 					namespace, false, true);
 		}
 
-		System.out.printf("Query response: %s%n", queryResponse);
+//		System.out.printf("Query response: %s%n", queryResponse);
 
-		return queryResponse.getMatchesList()
-			.stream()
-			.filter(scoredVector -> scoredVector.getScore() >= request.getSimilarityThreshold())
-			.map(scoredVector -> {
-				var id = scoredVector.getId();
-				Struct metadataStruct = scoredVector.getMetadata();
-				var content = metadataStruct.getFieldsOrThrow(this.pineconeContentFieldName).getStringValue();
-				Map<String, Object> metadata = extractMetadata(metadataStruct);
-				metadata.put(this.pineconeDistanceMetadataFieldName, 1 - scoredVector.getScore());
-				return new Document(id, content, metadata);
-			})
-			.toList();
+		List<Document> list = queryResponse.getMatchesList()
+				.stream()
+				.filter(scoredVector -> scoredVector.getScore() >= request.getSimilarityThreshold())
+				.map(scoredVector -> {
+					var id = scoredVector.getId();
+					Struct metadataStruct = scoredVector.getMetadata();
+					var content = metadataStruct.getFieldsOrThrow(this.pineconeContentFieldName).getStringValue();
+					Map<String, Object> metadata = extractMetadata(metadataStruct);
+					metadata.put(this.pineconeDistanceMetadataFieldName, 1 - scoredVector.getScore());
+					return new Document(id, content, metadata);
+				})
+				.toList();
+
+
+		list = list.stream().filter(this::clearDocument).toList();
+
+		return list;
 	}
+
+	private boolean clearDocument(Document document) {
+
+		String link = (String) document.getMetadata().get("link");
+
+		try {
+			HttpURLConnection connection = (HttpURLConnection) new URL(link).openConnection();
+			connection.setRequestMethod("GET");
+			connection.setConnectTimeout(2000);
+			connection.setReadTimeout(2000);
+			int responseCode = connection.getResponseCode();
+			if (responseCode == 200) {
+				// 페이지 내용 확인
+				BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				String inputLine;
+				StringBuilder content = new StringBuilder();
+				while ((inputLine = in.readLine()) != null) {
+					content.append(inputLine);
+				}
+				in.close();
+
+				if(content.toString().contains("게시물에 접근할 수 없습니다")) {
+					doDelete(Collections.singletonList(document.getId()));
+					System.out.println("delete Link" + link);
+					return false;
+				}
+				return  true;
+			}
+			return false;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+//	private boolean isDocumentAvailable(String link) {
+//		try {
+//			HttpURLConnection connection = (HttpURLConnection) new URL(link).openConnection();
+//			connection.setRequestMethod("GET");
+//			connection.setConnectTimeout(2000);
+//			connection.setReadTimeout(2000);
+//			int responseCode = connection.getResponseCode();
+//			if (responseCode == 200) {
+//				// 페이지 내용 확인
+//				BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+//				String inputLine;
+//				StringBuilder content = new StringBuilder();
+//				while ((inputLine = in.readLine()) != null) {
+//					content.append(inputLine);
+//				}
+//				in.close();
+//
+//				return !content.toString().contains("게시물에 접근할 수 없습니다"); // 해당 문구가 있을 경우 false 반환
+//			}
+//			return false;
+//		} catch (Exception e) {
+//			return false;
+//		}
+//	}
+//	public void checkAllLinks() {
+//		List<String> allLinks = new ArrayList<>();
+//		String paginationToken = null;
+//		int limit = 100;
+//
+//		ListResponse listResponse = this.index.list();
+//
+//		for (ListItem item : listResponse.getVectorsList()) {
+//			String id = item.getId();
+//
+//			FetchResponse fetchResponse = this.index.fetch(Collections.singletonList(id));
+//			Vector vector = fetchResponse.getVectorsOrDefault(id, null);
+//
+//			if (vector.getMetadata().containsFields("link")) {
+//				String link = vector.getMetadata().getFieldsOrThrow("link").getStringValue();
+//				if(!isDocumentAvailable(link)){
+//					doDelete(Collections.singletonList(id));
+//					System.out.println("delete Link" + link);
+//				}
+//			}
+//		}
+//	}
 
 	@Override
 	public List<Document> doSimilaritySearch(SearchRequest request) {
@@ -390,10 +478,10 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 	public VectorStoreObservationContext.Builder createObservationContextBuilder(String operationName) {
 
 		return VectorStoreObservationContext.builder(VectorStoreProvider.PINECONE.value(), operationName)
-			.withCollectionName(this.pineconeIndexName)
-			.withDimensions(this.embeddingModel.dimensions())
-			.withNamespace(this.pineconeNamespace)
-			.withFieldName(this.pineconeContentFieldName);
+				.withCollectionName(this.pineconeIndexName)
+				.withDimensions(this.embeddingModel.dimensions())
+				.withNamespace(this.pineconeNamespace)
+				.withFieldName(this.pineconeContentFieldName);
 	}
 
 }
