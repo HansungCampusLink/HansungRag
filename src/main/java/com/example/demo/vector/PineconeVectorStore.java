@@ -21,6 +21,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
+
+import io.micrometer.observation.Observation;
 import io.pinecone.proto.*;
 import io.pinecone.proto.Vector;
 import org.springframework.ai.document.Document;
@@ -51,6 +53,8 @@ import io.pinecone.clients.Index;
 import io.pinecone.clients.Pinecone;
 import io.pinecone.unsigned_indices_model.QueryResponseWithUnsignedIndices;
 import io.pinecone.unsigned_indices_model.VectorWithUnsignedIndices;
+
+import static com.example.demo.vector.VectorUtils.getLocalDateTimeFromDouble;
 import static io.pinecone.commons.IndexInterface.buildUpsertVectorWithUnsignedIndices;
 
 /**
@@ -346,16 +350,17 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 				.map(scoredVector -> {
 					var id = scoredVector.getId();
 					Struct metadataStruct = scoredVector.getMetadata();
-					var content = metadataStruct.getFieldsOrThrow(this.pineconeContentFieldName).getStringValue();
 					Map<String, Object> metadata = extractMetadata(metadataStruct);
+					if (metadata.containsKey("date")) {
+						metadata.put("date", getLocalDateTimeFromDouble( (Double) metadata.get("date")));
+					}
+					var content = metadata.toString() + metadataStruct.getFieldsOrThrow(this.pineconeContentFieldName).getStringValue();
 					metadata.put(this.pineconeDistanceMetadataFieldName, 1 - scoredVector.getScore());
 					return new Document(id, content, metadata);
 				})
 				.toList();
 
-
 		list = list.stream().filter(this::clearDocument).toList();
-
 		return list;
 	}
 
@@ -384,8 +389,10 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 					System.out.println("delete Link" + link);
 					return false;
 				}
+				doDelete(Collections.singletonList(document.getId()));
 				return  true;
 			}
+
 			return false;
 		} catch (Exception e) {
 			return false;
