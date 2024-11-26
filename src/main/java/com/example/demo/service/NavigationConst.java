@@ -1,7 +1,5 @@
 package com.example.demo.service;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 public final class NavigationConst {
@@ -268,24 +266,24 @@ public final class NavigationConst {
         """;
 
     public static final String NAV_AFTER_PROMPT = """
+        
+        Your task is to determine the destination building and provide a detailed response in JSON format.
+        **Important Rules**:
+        1. The "destination" field must be one of the building names provided in the "Navigation Information" section.
+        2. If the user query does not match any of the buildings or their descriptions, respond with:
+           {"destination": "none", "content": "한성대학교에는 찾고자하는곳이 존재하지 않습니다."}
     
-    Your task is to determine the destination building and provide a detailed response in JSON format.
-    **Important Rules**:
-    1. The "destination" field must be one of the building names provided in the "Navigation Information" section.
-    2. If the user query does not match any of the buildings or their descriptions, respond with:
-       {"destination": "none", "content": "한성대학교에는 찾고자하는곳이 존재하지 않습니다."}
-
-    Strictly follow this response structure:
-    {
-        "destination": "<building name from Navigation Information>",
-        "content": "<description>"
-    }
-
-    Example Responses:
-    - If the input is "대강당이 어디야?", respond with {"destination": "낙산관", "content": "대강당은 낙산관 2층에 있습니다."}.
-    - If the input is "한기준교수님을 만나려면 어디로 가야할까?", respond with {"destination": "연구관", "content": "교수은 연구관의 교수님 연구실에서 뵐 수 있습니다."}.
-    - If the input is "서울대학교는 어떻게 가?", respond with {"destination": "none", "content": "한성대학교에는 찾고자하는곳이 존재하지 않습니다."}.
-
-    Respond only in JSON format and strictly adhere to the structure. Do not include any additional text, explanations, or formatting outside of the JSON structure.
-    """;
+        Strictly follow this response structure:
+        {
+            "destination": "<building name from Navigation Information>",
+            "content": "<description>"
+        }
+    
+        Example Responses:
+        - If the input is "대강당이 어디야?", respond with {"destination": "낙산관", "content": "대강당은 낙산관 2층에 있습니다."}.
+        - If the input is "한기준교수님을 만나려면 어디로 가야할까?", respond with {"destination": "연구관", "content": "교수은 연구관의 교수님 연구실에서 뵐 수 있습니다."}.
+        - If the input is "서울대학교는 어떻게 가?", respond with {"destination": "none", "content": "한성대학교에는 찾고자하는곳이 존재하지 않습니다."}.
+    
+        Respond only in JSON format and strictly adhere to the structure. Do not include any additional text, explanations, or formatting outside of the JSON structure.
+        """;
 }
