@@ -1,85 +1,77 @@
 package com.example.demo;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+@Component
 public class MaumChatModel implements ChatModel {
 
-    private static final String API_URL = "https://norchestra.maum.ai/harmonize/dosmart";
-    private static final String APP_ID = "APP_ID";
-    private static final String MODEL_NAME = "MODEL_NAME";
-    private static final String MODEL_ITEM = "MODEL_ITEM";
+    private final String API_URL = "https://norchestra.maum.ai/harmonize/dosmart";
+    private final String APP_ID;
+    private final String MODEL_NAME = "hansung_70b_chat";
+    private final String MODEL_ITEM = "maumgpt-maal2-70b-chat";
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private final RestTemplate restTemplate;
+    private final RestTemplate restTemplate = new RestTemplate();
 
-    public MaumChatModel() {
-        this.restTemplate = new RestTemplate();
+    public MaumChatModel(@Value("${maum.app_id}") String APP_ID) {
+        this.APP_ID = APP_ID;
     }
 
     @Override
     public ChatResponse call(Prompt prompt) {
+        List<Request.Message> messages = prompt.getInstructions().stream().map(instruction -> {
+            MessageType messageType = instruction.getMessageType();
+            String role = switch (messageType) {
+                case SYSTEM -> Request.Message.ROLE_SYSTEM;
+                case USER -> Request.Message.ROLE_USER;
+                case ASSISTANT -> Request.Message.ROLE_ASSISTANT;
+                default -> Request.Message.ROLE_USER;
+            };
+            String content = instruction.getContent();
 
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("app_id", APP_ID);
-        requestBody.put("name", MODEL_NAME);
-        requestBody.put("item", new String[]{MODEL_ITEM});
+            return new Request.Message(role, content);
+        }).toList();
 
-        Map<String, Object> userUtterance = new HashMap<>();
-        userUtterance.put("role", "ROLE_USER");
-        userUtterance.put("content", prompt.getContents());
 
-        Map<String, Object> systemUtterance = new HashMap<>();
-        systemUtterance.put("role", "ROLE_SYSTEM");
-        systemUtterance.put("content", "시스템 메시지");
+        Request request = new Request(APP_ID, MODEL_NAME, List.of(MODEL_ITEM), List.of(new Request.Param(messages, prompt.getOptions())));
+        String requestBody;
+        try {
+             requestBody = objectMapper.writeValueAsString(request);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
-        ChatOptions options = prompt.getOptions() != null ? prompt.getOptions() : getDefaultOptions();
-        Map<String, Object> config = new HashMap<>();
-        config.put("top_p", options.getTopP());
-        config.put("top_k", options.getTopK());
-        config.put("temperature", options.getTemperature());
-        config.put("presence_penalty", options.getPresencePenalty());
-        config.put("frequency_penalty", options.getFrequencyPenalty());
-        config.put("repetition_penalty", 1.0);
-
-        // param 배열 구성
-        Map<String, Object> param = new HashMap<>();
-        param.put("utterances", new Map[]{systemUtterance, userUtterance});
-        param.put("config", config);
-
-        requestBody.put("param", new Map[]{param});
-
-        // HTTP 헤더 설정
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // HTTP 요청 생성
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+        HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
 
-        try {
-            // API 호출
-            ResponseEntity<Map> response = restTemplate.exchange(API_URL, HttpMethod.POST, entity, Map.class);
+        ResponseEntity<String> response = restTemplate.exchange(API_URL, HttpMethod.POST, entity, String.class);
 
-            // 응답 처리
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                Map<String, Object> responseBody = response.getBody();
 
-                String content = (String) responseBody.get("content");
-                return new ChatResponse(content);
-            } else {
-                // 오류 처리
-                return new ChatResponse("오류가 발생했습니다.");
-            }
-        } catch (Exception e) {
-            // 예외 처리
-            return new ChatResponse("예외가 발생했습니다: " + e.getMessage());
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            String content = response.getBody();
+            AssistantMessage assistantMessage = new AssistantMessage(content);
+            return ChatResponse.builder()
+                    .withGenerations(List.of(new Generation(assistantMessage)))
+                    .build();
+        } else {
+            return ChatResponse.builder().build();
         }
     }
 
@@ -131,5 +123,46 @@ public class MaumChatModel implements ChatModel {
                 return this;
             }
         };
+    }
+
+
+    @Getter
+    public static class Request {
+        private final String app_id;
+        private final String name;
+        private final List<String> item;
+        private final List<Param> param;
+
+        public Request(String app_id, String name, List<String> item, List<Param> param) {
+            this.app_id = app_id;
+            this.name = name;
+            this.item = item;
+            this.param = param;
+        }
+
+        @Getter
+        public static class Param {
+            private final List<Message> utterances;
+            private final ChatOptions config;
+
+            public Param(List<Message> utterances, ChatOptions config) {
+                this.utterances = utterances;
+                this.config = config;
+            }
+        }
+
+        @Getter
+        public static class Message {
+            public static final String ROLE_SYSTEM = "ROLE_SYSTEM";
+            public static final String ROLE_USER = "ROLE_USER";
+            public static final String ROLE_ASSISTANT = "ROLE_ASSISTANT";
+            private final String role;
+            private final String content;
+
+            public Message(String role, String content) {
+                this.role = role;
+                this.content = content;
+            }
+        }
     }
 }

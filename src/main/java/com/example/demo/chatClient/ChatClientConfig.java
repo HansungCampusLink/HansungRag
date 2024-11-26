@@ -2,11 +2,13 @@ package com.example.demo.chatClient;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.ResponseFormat;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class ChatClientConfig {
@@ -24,6 +26,17 @@ public class ChatClientConfig {
                 .defaultSystem(DEFAULT_SYSTEM_MESSAGE)
                 .defaultAdvisors(questionAnswerAdvisor)
                 .build();
+    }
+
+    @Bean
+    @Primary
+    ChatClient.Builder Builder(OpenAiChatModel openAiChatModel) {
+        return ChatClient.builder(openAiChatModel);
+    }
+
+    @Bean
+    ChatClient maumChatClient(ChatModel maumChatModel) {
+        return ChatClient.builder(maumChatModel).build();
     }
 
     @Bean

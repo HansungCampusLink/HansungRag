@@ -2,6 +2,8 @@ package com.example.demo;
 
 import com.example.demo.dto.Document;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,6 +40,16 @@ class HansungRagApplicationTests {
 		var springAiDocument = document.toSpringAiDocument();
 
 		vectorStore.add(List.of(springAiDocument));
+	}
+
+	@Autowired
+	private MaumChatModel maumChatModel;
+
+	@Test
+	void chatTest() {
+		Prompt prompt = new Prompt("2024 공모전에 대해 알려줘");
+		ChatResponse call = maumChatModel.call(prompt);
+		System.out.println("response = " + call.getResult().getOutput().toString());
 	}
 
 }
