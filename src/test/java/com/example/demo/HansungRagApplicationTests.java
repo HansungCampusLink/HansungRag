@@ -53,7 +53,7 @@ class HansungRagApplicationTests {
 		long start = System.currentTimeMillis();
 		Prompt prompt = new Prompt("2024 공모전에 대해 알려줘");
 		ChatResponse call = maumChatModel.call(prompt);
-		System.out.println("response = " + call.getResult().getOutput().toString());
+		System.out.println("response = " + call.getResult().getOutput().getContent());
 
 		long end = System.currentTimeMillis();
 
@@ -69,7 +69,7 @@ class HansungRagApplicationTests {
 		long start = System.currentTimeMillis();
 		Prompt prompt = new Prompt("2024 공모전에 대해 알려줘");
 		ChatResponse call = openAiChatModel.call(prompt);
-		System.out.println("response = " + call.getResult().getOutput().toString());
+		System.out.println("response = " + call.getResult().getOutput().getContent());
 
 		long end = System.currentTimeMillis();
 

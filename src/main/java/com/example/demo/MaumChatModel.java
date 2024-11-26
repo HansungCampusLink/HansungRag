@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class MaumChatModel implements ChatModel {
@@ -61,11 +62,11 @@ public class MaumChatModel implements ChatModel {
 
         HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(API_URL, HttpMethod.POST, entity, String.class);
+        ResponseEntity<Map> response = restTemplate.exchange(API_URL, HttpMethod.POST, entity, Map.class);
 
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-            String content = response.getBody();
+            String content = (String) response.getBody().get("text");
             AssistantMessage assistantMessage = new AssistantMessage(content);
             return ChatResponse.builder()
                     .withGenerations(List.of(new Generation(assistantMessage)))
