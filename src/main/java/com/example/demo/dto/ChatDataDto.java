@@ -13,7 +13,7 @@ public class ChatDataDto {
     private Long chatId;
     private String who = "Unknown";
     private String major = "Unknown";
-    private boolean isOpenAi = true;
+    private boolean openAi = true;
     @NotNull @NotEmpty
     private List<MessageDto> messages;
 }
