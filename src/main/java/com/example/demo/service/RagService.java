@@ -21,8 +21,16 @@ import static org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor.R
 public class RagService {
 
     private final ChatClient ragChatClient;
+    private final ChatClient maumChatClient;
 
     public RagOutputDto getRagOutPut(ChatDataDto chatDataDto) {
+        ChatClient chatClient;
+        if (chatDataDto.isOpenAi()) {
+            chatClient = ragChatClient;
+        }
+        else {
+            chatClient = maumChatClient;
+        }
 
         List<MessageDto> messages = chatDataDto.getMessages();
 
@@ -39,7 +47,7 @@ public class RagService {
                         })
                 .collect(Collectors.toList());
 
-        ChatResponse chatResponse = this.ragChatClient
+        ChatResponse chatResponse = chatClient
                 .prompt()
                 .messages(chatHistory)
                 .user(userContent)

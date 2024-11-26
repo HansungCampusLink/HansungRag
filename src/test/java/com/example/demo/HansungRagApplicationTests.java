@@ -1,9 +1,11 @@
 package com.example.demo;
 
 import com.example.demo.dto.Document;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +20,7 @@ class HansungRagApplicationTests {
 	private VectorStore vectorStore;
 
 	@Test
+	@Disabled
 	void contextLoads() {
 		Document document = new Document();
 		document.setContent("# 전북특별자치도평생교육장학진하원\n" +
@@ -47,9 +50,30 @@ class HansungRagApplicationTests {
 
 	@Test
 	void chatTest() {
+		long start = System.currentTimeMillis();
 		Prompt prompt = new Prompt("2024 공모전에 대해 알려줘");
 		ChatResponse call = maumChatModel.call(prompt);
 		System.out.println("response = " + call.getResult().getOutput().toString());
+
+		long end = System.currentTimeMillis();
+
+		System.out.println((end - start) / 1000);
+	}
+
+	@Autowired
+	private OpenAiChatModel openAiChatModel;
+
+
+	@Test
+	void openChatTest() {
+		long start = System.currentTimeMillis();
+		Prompt prompt = new Prompt("2024 공모전에 대해 알려줘");
+		ChatResponse call = openAiChatModel.call(prompt);
+		System.out.println("response = " + call.getResult().getOutput().toString());
+
+		long end = System.currentTimeMillis();
+
+		System.out.println((end - start) / 1000);
 	}
 
 }
