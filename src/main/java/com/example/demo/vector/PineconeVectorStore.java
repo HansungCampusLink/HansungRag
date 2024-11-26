@@ -323,8 +323,6 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 
 	public List<Document> similaritySearch(SearchRequest request, String namespace) {
 
-		checkAllLinks(); // 모든 문서를 확인하며 깡통 공지사항 제거
-
 		String nativeExpressionFilters = (request.getFilterExpression() != null)
 				? this.filterExpressionConverter.convertExpression(request.getFilterExpression()) : "";
 
@@ -342,7 +340,7 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 
 //		System.out.printf("Query response: %s%n", queryResponse);
 
-		return queryResponse.getMatchesList()
+		List<Document> list = queryResponse.getMatchesList()
 				.stream()
 				.filter(scoredVector -> scoredVector.getScore() >= request.getSimilarityThreshold())
 				.map(scoredVector -> {
@@ -354,8 +352,17 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 					return new Document(id, content, metadata);
 				})
 				.toList();
+
+
+		list = list.stream().filter(this::clearDocument).toList();
+
+		return list;
 	}
-	private boolean isDocumentAvailable(String link) {
+
+	private boolean clearDocument(Document document) {
+
+		String link = (String) document.getMetadata().get("link");
+
 		try {
 			HttpURLConnection connection = (HttpURLConnection) new URL(link).openConnection();
 			connection.setRequestMethod("GET");
@@ -372,35 +379,65 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 				}
 				in.close();
 
-				return !content.toString().contains("게시물에 접근할 수 없습니다"); // 해당 문구가 있을 경우 false 반환
+				if(content.toString().contains("게시물에 접근할 수 없습니다")) {
+					doDelete(Collections.singletonList(document.getId()));
+					System.out.println("delete Link" + link);
+					return false;
+				}
+				return  true;
 			}
 			return false;
 		} catch (Exception e) {
 			return false;
 		}
 	}
-	public void checkAllLinks() {
-		List<String> allLinks = new ArrayList<>();
-		String paginationToken = null;
-		int limit = 100;
 
-		ListResponse listResponse = this.index.list();
-
-		for (ListItem item : listResponse.getVectorsList()) {
-			String id = item.getId();
-
-			FetchResponse fetchResponse = this.index.fetch(Collections.singletonList(id));
-			Vector vector = fetchResponse.getVectorsOrDefault(id, null);
-
-			if (vector.getMetadata().containsFields("link")) {
-				String link = vector.getMetadata().getFieldsOrThrow("link").getStringValue();
-				if(!isDocumentAvailable(link)){
-					doDelete(Collections.singletonList(id));
-					System.out.println("delete Link" + link);
-				}
-			}
-		}
-	}
+//	private boolean isDocumentAvailable(String link) {
+//		try {
+//			HttpURLConnection connection = (HttpURLConnection) new URL(link).openConnection();
+//			connection.setRequestMethod("GET");
+//			connection.setConnectTimeout(2000);
+//			connection.setReadTimeout(2000);
+//			int responseCode = connection.getResponseCode();
+//			if (responseCode == 200) {
+//				// 페이지 내용 확인
+//				BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+//				String inputLine;
+//				StringBuilder content = new StringBuilder();
+//				while ((inputLine = in.readLine()) != null) {
+//					content.append(inputLine);
+//				}
+//				in.close();
+//
+//				return !content.toString().contains("게시물에 접근할 수 없습니다"); // 해당 문구가 있을 경우 false 반환
+//			}
+//			return false;
+//		} catch (Exception e) {
+//			return false;
+//		}
+//	}
+//	public void checkAllLinks() {
+//		List<String> allLinks = new ArrayList<>();
+//		String paginationToken = null;
+//		int limit = 100;
+//
+//		ListResponse listResponse = this.index.list();
+//
+//		for (ListItem item : listResponse.getVectorsList()) {
+//			String id = item.getId();
+//
+//			FetchResponse fetchResponse = this.index.fetch(Collections.singletonList(id));
+//			Vector vector = fetchResponse.getVectorsOrDefault(id, null);
+//
+//			if (vector.getMetadata().containsFields("link")) {
+//				String link = vector.getMetadata().getFieldsOrThrow("link").getStringValue();
+//				if(!isDocumentAvailable(link)){
+//					doDelete(Collections.singletonList(id));
+//					System.out.println("delete Link" + link);
+//				}
+//			}
+//		}
+//	}
 
 	@Override
 	public List<Document> doSimilaritySearch(SearchRequest request) {
