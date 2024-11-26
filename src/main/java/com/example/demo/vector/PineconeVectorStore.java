@@ -389,9 +389,10 @@ public class PineconeVectorStore extends AbstractObservationVectorStore {
 					System.out.println("delete Link" + link);
 					return false;
 				}
-				doDelete(Collections.singletonList(document.getId()));
+
 				return  true;
 			}
+			doDelete(Collections.singletonList(document.getId()));
 
 			return false;
 		} catch (Exception e) {
