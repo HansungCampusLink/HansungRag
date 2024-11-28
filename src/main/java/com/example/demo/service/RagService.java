@@ -11,6 +11,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,7 +37,7 @@ public class RagService {
 
         MessageDto lastMessage = messages.get(messages.size() - 1);
 
-        String userContent = String.format("who : %s, major: %s, question : ", chatDataDto.getWho(), chatDataDto.getMajor(), lastMessage.getContent());
+        String userContent = String.format("who : %s, major: %s, question : %s", chatDataDto.getWho(), chatDataDto.getMajor(), lastMessage.getContent());
 
         List<Message> chatHistory = chatDataDto.getMessages().stream()
                 .map(message ->
@@ -46,6 +47,8 @@ public class RagService {
                             default -> throw new IllegalStateException("Unexpected value: " + message.getRole());
                         })
                 .collect(Collectors.toList());
+
+        chatHistory.remove(chatHistory.size() - 1);
 
         ChatResponse chatResponse = chatClient
                 .prompt()
@@ -57,6 +60,7 @@ public class RagService {
 
         List<String> refLists = documents.stream()
                 .map(Document::getMetadata)
+                .sorted((doc1, doc2) -> ((LocalDateTime) doc2.get("date")).compareTo((LocalDateTime) doc1.get("date")))
                 .map(metadata -> metadata.get("link").toString())
                 .collect(Collectors.toList());
 
